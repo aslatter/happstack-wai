@@ -136,15 +136,20 @@ convertResponse :: H.Response -> W.Response
 convertResponse hResp =
   -- TODO description
   let status = W.Status (H.rsCode hResp) ""
-      headers =
+      headersNoCl =
           concatMap (\(H.HeaderPair k vs) -> map (\v -> (CI.mk k, v)) vs) $
           Map.elems (H.rsHeaders hResp)
+      headers =
+          case H.rsfLength (H.rsFlags hResp) of
+            H.ContentLength ->
+                ("Content-Length", B8.pack $ show $ BL.length $ H.rsBody hResp)
+                 : headersNoCl
+            _ -> headersNoCl
   in case hResp of
     H.SendFile{H.sfOffset=off,H.sfCount=count,H.sfFilePath=filePath}
         ->
          let fp = W.FilePart off count
-         in W.ResponseFile status headers filePath (Just fp)
-    -- TODO do something with 'rsFlags' ?!? 
+         in W.ResponseFile status headersNoCl filePath (Just fp)
     H.Response{H.rsBody=body}
         -> W.responseLBS status headers body
 
