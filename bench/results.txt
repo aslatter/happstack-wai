@@ -1,0 +1,58 @@
+On my Core 2 Duo Mac Book Pro (Snow Leopard), compiled with -threaded -O2.
+
+The benchmark server is from the one in the snap-benchmark repo.
+
+Simple Http:
+
+httperf --hog --client=0/1 --server=localhost --port=8000 --uri=/pong --rate=1000 --send-buffer=4096 --recv-buffer=16384 --num-conns=10 --num-calls=10000 --burst-length=20
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+Maximum connect burst length: 2
+
+Total: connections 10 requests 100000 replies 100000 test-duration 10.776 s
+
+Connection rate: 0.9 conn/s (1077.6 ms/conn, <=10 concurrent connections)
+Connection time [ms]: min 10563.3 avg 10685.5 max 10768.2 median 10657.5 stddev 64.5
+Connection time [ms]: connect 0.1
+Connection length [replies/conn]: 10000.000
+
+Request rate: 9280.0 req/s (0.1 ms/req)
+Request size [B]: 66.0
+
+Reply rate [replies/s]: min 9004.0 avg 9359.5 max 9715.1 stddev 502.9 (2 samples)
+Reply time [ms]: response 19.4 transfer 0.1
+Reply size [B]: header 159.0 content 4.0 footer 2.0 (total 165.0)
+Reply status: 1xx=0 2xx=100000 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 1.71 system 6.96 (user 15.9% system 64.6% total 80.5%)
+Net I/O: 2075.3 KB/s (17.0*10^6 bps)
+
+Errors: total 0 client-timo 0 socket-timo 0 connrefused 0 connreset 0
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
+
+
+Happstack-Wai:
+
+httperf --hog --client=0/1 --server=localhost --port=8000 --uri=/pong --rate=1000 --send-buffer=4096 --recv-buffer=16384 --num-conns=10 --num-calls=10000 --burst-length=20
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+Maximum connect burst length: 2
+
+Total: connections 10 requests 100000 replies 100000 test-duration 5.028 s
+
+Connection rate: 2.0 conn/s (502.8 ms/conn, <=10 concurrent connections)
+Connection time [ms]: min 4950.6 avg 4992.5 max 5021.6 median 4997.5 stddev 23.7
+Connection time [ms]: connect 0.0
+Connection length [replies/conn]: 10000.000
+
+Request rate: 19889.2 req/s (0.1 ms/req)
+Request size [B]: 66.0
+
+Reply rate [replies/s]: min 19889.2 avg 19889.2 max 19889.2 stddev 0.0 (1 samples)
+Reply time [ms]: response 9.4 transfer 0.0
+Reply size [B]: header 91.0 content 4.0 footer 2.0 (total 97.0)
+Reply status: 1xx=0 2xx=100000 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 0.82 system 3.03 (user 16.4% system 60.3% total 76.7%)
+Net I/O: 3127.1 KB/s (25.6*10^6 bps)
+
+Errors: total 0 client-timo 0 socket-timo 0 connrefused 0 connreset 0
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
