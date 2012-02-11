@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, CPP #-}
 
 module Happstack.Server.Wai
     ( toApplication
@@ -145,6 +145,8 @@ convertResponse hResp =
   -- TODO description
     status = W.Status (H.rsCode hResp) ""
     headersNoCl =
+        (serverIdent :) $
+        (waiIdent :) $
         concatMap (\(H.HeaderPair k vs) -> map (\v -> (CI.mk k, v)) vs) $
         Map.elems (H.rsHeaders hResp)
     headers =
@@ -153,3 +155,15 @@ convertResponse hResp =
               ("Content-Length", B8.pack $ show $ BL.length $ H.rsBody hResp)
               : headersNoCl
           _ -> headersNoCl
+
+serverIdent :: W.Header
+serverIdent =
+    ( "Server"
+    , B8.pack $ "Happstack/" ++ VERSION_happstack_server
+    )
+
+waiIdent :: W.Header
+waiIdent =
+    ( "X-Wai-Version"
+    , VERSION_wai
+    )
