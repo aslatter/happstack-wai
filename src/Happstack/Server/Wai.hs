@@ -7,6 +7,7 @@ module Happstack.Server.Wai
       -- ** Low-level functions
     , convertRequest
     , convertResponse
+    , standardHeaders
     ) where
 
 import Control.Applicative
@@ -22,6 +23,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 
 import qualified Happstack.Server as H
+import qualified Happstack.Server.Internal.Clock as H
 import qualified Happstack.Server.Internal.Cookie as H
 import qualified Happstack.Server.Internal.MessageWrap as H
 
@@ -38,7 +40,8 @@ toApplication :: H.ServerPart H.Response -> W.Application
 toApplication sp wReq = do
   hReq <- convertRequest wReq
   hResp <- liftIO $ H.simpleHTTP'' sp hReq
-  return $ convertResponse hResp
+  additionalHeaders <- liftIO standardHeaders
+  return $ convertResponse additionalHeaders hResp
 
 -- | Run a 'H.ServerPart' on warp at the specified port.
 run :: Warp.Port -> H.ServerPart H.Response -> IO ()
@@ -46,7 +49,8 @@ run port = Warp.run port . toApplication
 
 -- TODO - return '400 bad request' if we can't convert it
 -- | Convert a WAI 'W.Request' to a Happstack 'H.Request'.
-convertRequest :: W.Request -> ResourceT IO H.Request
+convertRequest :: W.Request -- ^ WAI request
+               -> ResourceT IO H.Request
 convertRequest wReq = do
   bodyInputRef <- liftIO newEmptyMVar
   bodyLbs <- BL.fromChunks <$> C.lazyConsume (W.requestBody wReq)
@@ -131,9 +135,22 @@ convertMethod m =
             W.CONNECT -> H.CONNECT
             W.OPTIONS -> H.OPTIONS
 
+-- | 'Date' header and server identification.
+standardHeaders :: IO W.ResponseHeaders
+standardHeaders = do
+  dtStr <- H.getApproximateTime
+  return
+    [ ("Date", dtStr)
+    , serverIdent
+    , waiIdent
+    ]
+
 -- | Convert a Happstack 'H.Response' to a WAI 'W.Response'
-convertResponse :: H.Response -> W.Response
-convertResponse hResp =
+convertResponse :: W.ResponseHeaders
+                -- ^ Headers not in the response to send to the client (see 'standardHeaders')
+                -> H.Response -- ^ Happstack response
+                -> W.Response
+convertResponse additionalHeaders hResp =
     case hResp of
       H.SendFile{H.sfOffset=off,H.sfCount=count,H.sfFilePath=filePath}
           ->
@@ -145,8 +162,7 @@ convertResponse hResp =
   -- TODO description
     status = W.Status (H.rsCode hResp) ""
     headersNoCl =
-        (serverIdent :) $
-        (waiIdent :) $
+        (additionalHeaders ++) $
         concatMap (\(H.HeaderPair k vs) -> map (\v -> (CI.mk k, v)) vs) $
         Map.elems (H.rsHeaders hResp)
     headers =
