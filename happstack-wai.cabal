@@ -17,6 +17,7 @@ cabal-version:       >=1.8
 
 library
   exposed-modules:     Happstack.Server.Wai
+  hs-source-dirs:      src
   -- other-modules:       
   build-depends:       base,
 
