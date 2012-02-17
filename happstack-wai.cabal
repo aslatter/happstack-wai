@@ -25,7 +25,7 @@ library
                        case-insensitive == 0.4.*,
                        conduit == 0.2.*,
                        containers == 0.4.*,
-                       happstack-server == 6.5.* || == 6.6.*,
+                       happstack-server >= 6.4 && < 6.7,
                        http-types == 0.6.*,
                        old-locale == 1.0.*,
                        text == 0.11.*,

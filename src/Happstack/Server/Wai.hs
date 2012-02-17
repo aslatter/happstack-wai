@@ -59,7 +59,9 @@ convertRequest wReq = do
 
   return $
     H.Request
+#if MIN_VERSION_happstack_server(6,5,0)
      (W.isSecure wReq)
+#endif
      (convertMethod $ W.requestMethod wReq)
      (convertPath $ W.pathInfo wReq)
      rawPath -- includes leading slash, does not include query
