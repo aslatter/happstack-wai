@@ -17,6 +17,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.ByteString.Lazy as BL
+import Data.Char (toLower)
 import qualified Data.Map as Map
 import Data.Maybe (mapMaybe)
 import Data.Text (Text)
@@ -74,11 +75,9 @@ convertRequest wReq = do
   where
     headers :: H.Headers -- Map ByteString HeaderPair
     headers =
-        let rawAssocs = flip map (W.requestHeaders wReq) $ \(ciName, val) ->
-                        (CI.original ciName, val)
-            -- TODO: skip round-trip through string and back
-            assocs = map (\(x,y) -> (B8.unpack x, B8.unpack y)) rawAssocs
-        in H.mkHeaders assocs
+        let assocs = flip map (W.requestHeaders wReq) $ \(ciName, val) ->
+                     (CI.original ciName, val)
+        in mkHeadersBs assocs
 
     httpVersion :: H.HttpVersion
     httpVersion =
@@ -183,3 +182,12 @@ waiIdent =
     ( "X-Wai-Version"
     , VERSION_wai
     )
+
+-- stuff to feed back to happstack-server
+
+-- | Takes a list of (key,val) pairs and converts it into Headers.  The
+-- keys will be converted to lowercase.
+mkHeadersBs :: [(ByteString,ByteString)] -> H.Headers
+mkHeadersBs hdrs
+    = Map.fromListWith join [ (B8.map toLower key, H.HeaderPair key [value]) | (key,value) <- hdrs ]
+    where join (H.HeaderPair key vs1) (H.HeaderPair _ vs2) = H.HeaderPair key (vs1++vs2)
